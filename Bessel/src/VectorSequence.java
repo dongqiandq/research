@@ -7,7 +7,11 @@ public class VectorSequence {
     private List<MyVector> vetors = new ArrayList<>();
     private int vSchema;//标识属于采样值哪个分量的状态序列
 
-
+    /**
+     * 通过输入的数据获取时间，来求取改时间点下对因为的位置
+     * @param data
+     * @return
+     */
     public Position inquire(Data data){
         Date time = data.getGpsTime();
         Long tNum = time.getTime();

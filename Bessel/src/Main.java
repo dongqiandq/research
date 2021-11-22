@@ -7,7 +7,7 @@ import java.util.List;
 public class Main {
     private static Util util = new Util();
     public static void main(String[] args) throws IOException {
-        List<Data> datas = util.readerByCarNumber("E:\\dq\\research\\trafficData\\test.CSV","京021263");
+        List<Data> datas = util.readerByCarNumber("E:\\DongQian\\trafficData\\test.CSV","京01144513");
         VectorSequence sequence = new VectorSequence();
         List<MyVector> vectors = sequence.getVetors();
         for(int i=0;i<datas.size();i++){
@@ -24,7 +24,7 @@ public class Main {
         Data dataTest = new Data();
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
         try {
-            Date t = sdf.parse("2013/5/31 23:38:36");
+            Date t = sdf.parse("2013/5/31 23:31:36");
             dataTest.setGpsTime(t);
             Position p = sequence.inquire(dataTest);
             System.out.println(p);
