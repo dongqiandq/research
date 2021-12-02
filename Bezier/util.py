@@ -1,19 +1,28 @@
 import entity
 import vector_sequence
-import datetime, time
+import datetime
+import time
 import csv
+import folium
 
 
+# 字符串转日期
 def string_datetime(s):
     return datetime.datetime.strptime(s, "%Y-%m-%d %H:%M:%S")
 
 
+# 日期转时间戳
 def datetime_time(dt):
     return time.mktime(dt.timetuple())
 
 
+# 日期转字符串
 def date_string(dt):
     return dt.strftime("%Y-%m-%d %H:%M:%S")
+
+
+# 绘制矢量序列的轨迹路径
+
 
 
 class Util:

@@ -1,5 +1,4 @@
 
-
 class Data:
     number = 0  # 标记是第一个还是第二个采样点
     id = 0
