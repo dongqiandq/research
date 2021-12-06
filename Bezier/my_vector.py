@@ -28,19 +28,15 @@ class MyVector:
     #  */
 
     def firstBessel(self, t, sequence):
-        vector = sequence.vectors[0]
-        del sequence.vectors[0]
+        index = len(sequence.vectors)-1
+        vector = sequence.vectors[index]
+        # del sequence.vectors[0]
         start = vector.dataStart
         end = vector.dataEnd
         y = (1 - t) * start.longitude + t * end.longitude
         x = (1 - t) * start.latitude + t * end.latitude
         pos = entity.Position()
         pos.construct1(x, y)
-        vector.isNow = True
-        vector.isFirstBessel = True
-        vector.startT = start.gpsTime
-        vector.endT = end.gpsTime
-        sequence.vectors.append(vector)
         return pos
 
     # /**
@@ -73,6 +69,8 @@ class MyVector:
         pBY = p2Y + fb * (p3Y - p1Y)
         co2 = entity.Position()
         co2.construct1(pBX, pBY)
+        self.control.clear()
+        # 两者的区别是，self.l = blablabla 这是一个赋值语句，self.l.append(blablabla)这不是一个赋值语句。两者的区别是，self.l = blablabla 这是一个赋值语句，self.l.append(blablabla)这不是一个赋值语句。
         self.control.append(co1)
         self.control.append(co2)
         pos = entity.Position()
@@ -89,7 +87,7 @@ class MyVector:
     #  * 通过给定的时间求取三阶贝塞尔曲线上的对应点坐标，使用矢量之前求取的控制点
     #  * @param vector:所在的矢量范围
     #  * @param date：输入要查询的坐标对应的时间
-    #  * @return :改时间下所对应的坐标
+    #  * @return :该时间下所对应的坐标
     #  */
     def inquireThird(self, vector, date):
         start = vector.dataStart
@@ -105,9 +103,9 @@ class MyVector:
         da.gpsTime = date
         t = self.seekT(start, da, end)
         x = (1 - t) * (1 - t) * (1 - t) * p1X + 3 * t * (1 - t) * (1 - t) * fa.x + 3 * t * t * (
-                1 - t) * fb.x + t * t * t * p3X
+                    1 - t) * fb.x + t * t * t * p3X
         y = (1 - t) * (1 - t) * (1 - t) * p1Y + 3 * t * (1 - t) * (1 - t) * fa.y + 3 * t * t * (
-                1 - t) * fb.y + t * t * t * p3Y
+                    1 - t) * fb.y + t * t * t * p3Y
         pos.x = x
         pos.y = y
         return pos
@@ -147,4 +145,6 @@ class MyVector:
         return pos
 
     def __str__(self):
-        return "MyVector{" + "isNow=" + str(self.isNow) + ", isFirstBessel=" + str(self.isFirstBessel) + ", startT=" + str(self.startT) + ", endT=" + str(self.endT) + ", position=" + str(self.position) + '}'
+        return "MyVector{" + "isNow=" + str(self.isNow) + ", isFirstBessel=" + str(
+            self.isFirstBessel) + ", startT=" + str(self.startT) + ", endT=" + str(self.endT) + ", position=" + str(
+            self.position) + '}'

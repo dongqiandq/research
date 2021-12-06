@@ -24,7 +24,7 @@ public class Main {
         Data dataTest = new Data();
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
         try {
-            Date t = sdf.parse("2013/5/31 23:31:36");
+            Date t = sdf.parse("2013/5/31 23:50:36");
             dataTest.setGpsTime(t);
             Position p = sequence.inquire(dataTest);
             System.out.println(p);
