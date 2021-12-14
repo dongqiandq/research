@@ -1,3 +1,5 @@
+import util
+
 
 class Data:
     number = 0  # 标记是第一个还是第二个采样点
@@ -14,8 +16,11 @@ class Data:
     aspect = 0  # 方向，正北偏东的方向角范围（0-359）
 
     def __str__(self):
-        info = "Data{" + "id=" + self.id + ", VehicleCode='" + self.vehicleCode + '\'' + ", gpsTime=" + self.gpsTime + ", longitude=" + self.longitude + ", latitude=" + self.latitude + ", speed=" + self.speed
+        info = "Data{" + "id=" + str(self.id) + ", VehicleCode='" + str(self.vehicleCode) + '\'' + ", gpsTime=" + util.date_string(self.gpsTime) + ", longitude=" + str(self.longitude) + ", latitude=" + str(self.latitude) + ", speed=" + str(self.speed)
         return info
+
+    def trans_csv(self):
+        return [self.vehicleCode, util.date_string(self.gpsTime), str(self.longitude), str(self.latitude), str(self.speed)]
 
 
 class ObjectRecord:  # 数据分布式存储
@@ -26,8 +31,8 @@ class ObjectRecord:  # 数据分布式存储
 
 
 class Position:
-    x = 0.0
-    y = 0.0
+    x = 0.0  # 经度 lon
+    y = 0.0  # 纬度 lat
 
     def construct1(self, x, y):
         self.x = x

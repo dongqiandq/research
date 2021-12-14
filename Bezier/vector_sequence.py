@@ -1,6 +1,7 @@
 import entity
 import my_vector
 import util
+import math
 
 
 class VectorSequence:
@@ -35,7 +36,7 @@ class VectorSequence:
             end = util.datetime_time(v.endT)
             if (tNum >= start) and (tNum <= end):
                 t = v.seekT(v.dataStart, data, v.dataEnd)
-                return v.firstBessel(t, self)
+                return my_vector.calculate_pos_fistbezier(t, v)
         print("此时改点不在目前的存储范围")
         return None
 
@@ -44,6 +45,7 @@ class VectorSequence:
     #  * @param data：新来的数据点
     #  */
     def vectorExtraction(self, data, t):
+        errordist = 0
         if len(self.vectors) == 0:  # 当前没有矢量活动,来的是第一个点
             self.addFirstData(data)  # 添加第一个矢量活动的开始结点
         elif (len(self.vectors) == 1) and (self.vectors[0].dataEnd is None):  # 新来的点是第二个点
@@ -52,9 +54,10 @@ class VectorSequence:
         else:
             index = len(self.vectors) - 1
             vector = self.vectors[index]
-            sign = util.Util().judge2(data, self, 0.003, 0.02)
+            sign, errordist = util.Util().judge2(data, self, 8, 10005300)
             if sign[1]:
                 # 需要道路口更新
+                # self.vectorUpdate(data)
                 self.vectorUpdateTurn(data)
             elif sign[0]:
                 # 需要普通更新
@@ -63,7 +66,7 @@ class VectorSequence:
                 # 不需要更新
                 vector.endT = data.gpsTime
                 vector.dataEnd = data
-        return self
+        return errordist
 
     def vectorUpdateTurn(self, data):
         """
@@ -76,20 +79,27 @@ class VectorSequence:
         posA = vectorNow.dataStart
         posB = vectorNow.dataEnd
         # 根据AB的坐标，求AB直线方程一般式a = Y2 - Y1,B = X1 - X2,C = X2*Y1 - X1*Y2
-        a = posB.longitude - posA.longitude
-        b = posA.latitude - posB.latitude
-        c = posB.latitude * posA.longitude - posA.latitude * posB.longitude
+        a = posB.latitude - posA.latitude
+        b = posA.longitude - posB.longitude
+        c = posB.longitude * posA.latitude - posA.longitude * posB.latitude
         # 求data到直线AB的垂足坐标 posD.
         # 设直线方程为ax+by+c=0,点坐标为(m,n)则垂足为((b*b*m-a*b*n-a*c)/(a*a+b*b),(a*a*n-a*b*m-b*c)/(a*a+b*b))
         posD = entity.Data()
-        posD.gpsTime = util.time_datetime((util.datetime_time(data.gpsTime) + util.datetime_time(posB.gpsTime)) / 2)
         posD.speed = posB.speed
-        posD.latitude = (b * b * data.latitude - a * b * data.longitude - a * c) / (a * a + b * b)
-        posD.longitude = (a * a * data.longitude - a * b * data.latitude - b * c) / (a * a + b * b)
+        posD.longitude = (b * b * data.longitude - a * b * data.latitude - a * c) / (a * a + b * b)
+        posD.latitude = (a * a * data.latitude - a * b * data.longitude - b * c) / (a * a + b * b)
+        x_BD = posD.longitude - posB.longitude
+        y_BD = posD.latitude - posB.latitude
+        d_BD = math.sqrt(x_BD * x_BD + y_BD * y_BD)
+        x_Ddata = posD.longitude - data.longitude
+        y_Ddata = posD.latitude - data.latitude
+        d_Ddata = math.sqrt(x_Ddata * x_Ddata + y_Ddata * y_Ddata)
+        t = d_BD / (d_Ddata + d_BD)
+        timeD = util.datetime_time(posB.gpsTime) + t * (
+                    util.datetime_time(data.gpsTime) - util.datetime_time(posB.gpsTime))
+        posD.gpsTime = util.time_datetime(timeD)
         # 生成前半段BD
         vector1 = my_vector.MyVector()
-        position1 = vector1.firstBessel(1, self)
-        vector1.position = position1
         vector1.dataStart = posB
         vector1.dataEnd = posD
         vector1.startT = vectorNow.endT
@@ -97,17 +107,19 @@ class VectorSequence:
         vector1.isNow = False
         vector1.isFirstBessel = True
         vectorNow.isNow = False
+        position1 = my_vector.calculate_pos_fistbezier(1, vector1)
+        vector1.position = position1
         self.vectors.append(vector1)
         # 生成后半段DC
         vector2 = my_vector.MyVector()
-        position2 = vector2.firstBessel(1, self)
-        vector2.position = position2
         vector2.dataStart = posD
         vector2.dataEnd = data
         vector2.startT = posD.gpsTime
         vector2.endT = data.gpsTime
         vector2.isNow = True
         vector2.isFirstBessel = True
+        position2 = my_vector.calculate_pos_fistbezier(1, vector2)
+        vector2.position = position2
         self.vectors.append(vector2)
         return self
 

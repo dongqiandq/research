@@ -1,6 +1,23 @@
 import entity
 import math
 import util
+import sympy as sp
+
+
+def calculate_pos_fistbezier(t, vector):
+    """
+    通过比例t和找到的vector求取对应坐标
+    :param t:
+    :param vector:
+    :return: 该比例t下对应的位置坐标
+    """
+    start = vector.dataStart
+    end = vector.dataEnd
+    y = (1 - t) * start.latitude + t * end.latitude
+    x = (1 - t) * start.longitude + t * end.longitude
+    pos = entity.Position()
+    pos.construct1(x, y)
+    return pos
 
 
 class MyVector:
@@ -21,20 +38,20 @@ class MyVector:
     #  */
 
     # /**
-    #  * 通过输入的矢量起始点和比例t，求取起始中间的对应点的坐标
+    #  * 根据前一段矢量生成新的矢量
     #  * @param t：比例值
     #  * @param sequence:矢量序列
     #  * @return ：t比例对应下的位置坐标
     #  */
 
     def firstBessel(self, t, sequence):
-        index = len(sequence.vectors)-1
+        index = len(sequence.vectors) - 1
         vector = sequence.vectors[index]
         # del sequence.vectors[0]
         start = vector.dataStart
         end = vector.dataEnd
-        y = (1 - t) * start.longitude + t * end.longitude
-        x = (1 - t) * start.latitude + t * end.latitude
+        y = (1 - t) * start.latitude + t * end.latitude
+        x = (1 - t) * start.longitude + t * end.longitude
         pos = entity.Position()
         pos.construct1(x, y)
         return pos
@@ -51,12 +68,12 @@ class MyVector:
     #  * @return :输出data2对应时间的坐标
     #  */
     def thirdBessel(self, a, data1, data2, data3):
-        p1X = data1.latitude
-        p1Y = data1.longitude
-        p2X = data2.latitude
-        p2Y = data2.longitude
-        p3X = data3.latitude
-        p3Y = data3.longitude
+        p1X = data1.longitude
+        p1Y = data1.latitude
+        p2X = data2.longitude
+        p2Y = data2.latitude
+        p3X = data3.longitude
+        p3Y = data3.latitude
         d12 = math.sqrt((p2X - p1X) * (p2X - p1X) + (p1Y - p2Y) * (p1Y - p2Y))
         d23 = math.sqrt((p2X - p3X) * (p2X - p3X) + (p3Y - p2Y) * (p3Y - p2Y))
         fa = a * (d12 / (d12 + d23))
@@ -74,14 +91,31 @@ class MyVector:
         self.control.append(co1)
         self.control.append(co2)
         pos = entity.Position()
-        t = self.seekT(data1, data2, data3)
+        t = sp.symbols('t')
         x = (1 - t) * (1 - t) * (1 - t) * p1X + 3 * t * (1 - t) * (1 - t) * pAX + 3 * t * t * (
                 1 - t) * pBX + t * t * t * p3X
         y = (1 - t) * (1 - t) * (1 - t) * p1Y + 3 * t * (1 - t) * (1 - t) * pAY + 3 * t * t * (
                 1 - t) * pBY + t * t * t * p3Y
+        # 求data2对应的曲率
+        # t = sp.symbols('t')
+        xt = sp.diff(x, t)
+        xtt = sp.diff(xt, t)
+        yt = sp.diff(y, t)
+        ytt = sp.diff(yt, t)
+        t1 = self.seekT(data1, data2, data3)
+        xt_t = float(xt.evalf(subs={t: t1}))
+        xtt_t = float(xtt.evalf(subs={t: t1}))
+        yt_t = float(yt.evalf(subs={t: t1}))
+        ytt_t = float(ytt.evalf(subs={t: t1}))
+        k = abs(xt_t * ytt_t - yt_t* xtt_t) / ((xt_t ** 2 + yt_t ** 2) ** (3 / 2))
         pos.y = y
         pos.x = x
-        return pos
+        # print("xt_t:"+str(xt_t))
+        # print("xtt_t:" + str(xtt_t))
+        # print("yt_t:" + str(yt_t))
+        # print("ytt_t:" + str(ytt_t))
+        print("k:" + str(k))
+        return pos, k
 
     # /**
     #  * 通过给定的时间求取三阶贝塞尔曲线上的对应点坐标，使用矢量之前求取的控制点
@@ -95,17 +129,17 @@ class MyVector:
         fa = vector.control[0]
         fb = vector.control[1]
         pos = entity.Position()
-        p1X = start.latitude
-        p1Y = start.longitude
-        p3X = end.latitude
-        p3Y = end.longitude
+        p1X = start.longitude
+        p1Y = start.latitude
+        p3X = end.longitude
+        p3Y = end.latitude
         da = entity.Data()
         da.gpsTime = date
         t = self.seekT(start, da, end)
         x = (1 - t) * (1 - t) * (1 - t) * p1X + 3 * t * (1 - t) * (1 - t) * fa.x + 3 * t * t * (
-                    1 - t) * fb.x + t * t * t * p3X
+                1 - t) * fb.x + t * t * t * p3X
         y = (1 - t) * (1 - t) * (1 - t) * p1Y + 3 * t * (1 - t) * (1 - t) * fa.y + 3 * t * t * (
-                    1 - t) * fb.y + t * t * t * p3Y
+                1 - t) * fb.y + t * t * t * p3Y
         pos.x = x
         pos.y = y
         return pos
@@ -136,10 +170,10 @@ class MyVector:
         end = vector.dataEnd
         fa = vector.control[0]
         fb = vector.control[1]
-        x = (1 - t) * (1 - t) * (1 - t) * start.latitude + 3 * t * (1 - t) * (1 - t) * fa.x + 3 * t * t * (
-                1 - t) * fb.x + t * t * t * data3.latitude
-        y = (1 - t) * (1 - t) * (1 - t) * start.longitude + 3 * t * (1 - t) * (1 - t) * fa.y + 3 * t * t * (
-                1 - t) * fb.y + t * t * t * data3.longitude
+        x = (1 - t) * (1 - t) * (1 - t) * start.longitude + 3 * t * (1 - t) * (1 - t) * fa.x + 3 * t * t * (
+                1 - t) * fb.x + t * t * t * data3.longitude
+        y = (1 - t) * (1 - t) * (1 - t) * start.latitude + 3 * t * (1 - t) * (1 - t) * fa.y + 3 * t * t * (
+                1 - t) * fb.y + t * t * t * data3.latitude
         pos.y = y
         pos.x = x
         return pos
