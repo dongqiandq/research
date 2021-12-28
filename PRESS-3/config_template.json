@@ -1,0 +1,17 @@
+{
+  "experiments":"[ROOT]/experiments/",
+  "data":"[ROOT]/data/",
+  "core":{
+    "tmp":"[ROOT]/core/tmp/",
+    "logs":"[ROOT]/core/logs/",
+    "log_level":"INFO"
+  },
+  "appServer":{
+    "logs":"[ROOT]/logs/app_server/",
+    "logLevel":"INFO",
+    "port":8081,
+    "static":"[ROOT]/bin/public/",
+    "coreAPIHandlers":1,
+    "otherAPIHandlers":32
+  }
+}
